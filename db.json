@@ -1,0 +1,105 @@
+{
+  "accounts": [
+    {
+      "account_id": 1,
+      "company_id": 101,
+      "currency_id": 1,
+      "account_code": "ACC001",
+      "account_name": "Cash",
+      "account_name_short": "Cash",
+      "account_type": "Asset",
+      "off_balancesheet": false,
+      "multiple_currency": false,
+      "currency_code": "USD",
+      "account_status": true,
+      "bank_account": true,
+      "created_by": 1,
+      "created_date": "2025-07-23",
+      "created_time": "09:30:00",
+      "id": "03cb"
+    },
+    {
+      "id": "a64f",
+      "account_id": 3,
+      "company_id": 101,
+      "currency_id": 1,
+      "account_code": "ACC002",
+      "account_name": "ABCDEFG",
+      "account_name_short": "ABC",
+      "account_type": "Asset",
+      "off_balancesheet": false,
+      "multiple_currency": false,
+      "currency_code": "USD",
+      "account_status": true,
+      "bank_account": true,
+      "created_by": 1,
+      "created_date": "2025-07-23",
+      "created_time": "09:30:00"
+    },
+    {
+      "id": "6c6b",
+      "account_id": 2,
+      "company_id": 10111,
+      "currency_id": 1,
+      "account_code": "ACC002",
+      "account_name": "ABCDEFG",
+      "account_name_short": "ABC",
+      "account_type": "Asset",
+      "off_balancesheet": false,
+      "multiple_currency": false,
+      "currency_code": "USD",
+      "account_status": true,
+      "bank_account": true,
+      "created_by": 1,
+      "created_date": "2025-07-23",
+      "created_time": "09:30:00"
+    }
+  ],
+  "countries": [
+    {
+      "country_id": 1,
+      "country_code": "MM",
+      "country_name": "Myanmar",
+      "country_name_short": "MMR"
+    },
+    {
+      "id": "c3fc",
+      "country_id": 2,
+      "country_code": "JP",
+      "country_name": "Japan",
+      "country_name_short": "JPN"
+    }
+  ],
+  "companies": [
+    {
+      "company_id": 1,
+      "country_id": 1,
+      "company_name": "ABCDE",
+      "company_name_short": "AB"
+    },
+    {
+      "id": "01a9",
+      "company_id": 2,
+      "country_id": 1,
+      "company_name": "HIJKL",
+      "company_name_short": "HI"
+    }
+  ],
+  "currencies": [
+    {
+      "currency_id": 1,
+      "currency_code": "MMK",
+      "currency_name": "Myanmar Kyats",
+      "currency_symbol": "Ks",
+      "currency_description": "Myanmar Kyats"
+    },
+    {
+      "id": "2890",
+      "currency_id": 2,
+      "currency_code": "USD",
+      "currency_name": "US Dollar",
+      "currency_symbol": "$",
+      "currency_description": "US Dollar"
+    }
+  ]
+}
