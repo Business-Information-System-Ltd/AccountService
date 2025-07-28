@@ -9,15 +9,21 @@ class ApiService {
   final String companyEndPoint = "${baseUrl}companies/";
   final String currencyEndPoint = "${baseUrl}currencies/";
 
+ 
   Future<List<Account>> fetchAccounts() async {
-    final response = await http.get(Uri.parse(accountEndPoint));
-    if (response.statusCode == 200) {
-      List data = json.decode(response.body);
-      return data.map((e) => Account.fromJson(e)).toList();
-    } else {
-      throw Exception('Failed to load accounts');
-    }
+  final response = await http.get(Uri.parse(accountEndPoint));
+  print("Calling API: $accountEndPoint");
+  print("Response status: ${response.statusCode}");
+  print("Response body: ${response.body}");
+
+  if (response.statusCode == 200) {
+    List data = json.decode(response.body);
+    return data.map((e) => Account.fromJson(e)).toList();
+  } else {
+    throw Exception('Failed to load accounts');
   }
+}
+
 
   Future<Account> createAccount(Account account) async {
     final response = await http.post(

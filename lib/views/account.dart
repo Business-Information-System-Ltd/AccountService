@@ -1,3 +1,8 @@
+import 'dart:io';
+import 'dart:convert';
+import 'package:accountservice/views/apiservices.dart';
+import 'package:accountservice/views/data.dart';
+import 'package:accountservice/views/table.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_select_flutter/chip_display/multi_select_chip_display.dart';
 import 'package:multi_select_flutter/dialog/multi_select_dialog_field.dart';
@@ -121,9 +126,10 @@ class _AccountFormScreenState extends State<AccountFormScreen>
                 Expanded(
                   child: _selectedTabIndex == 0
                       ? _buildAccountTab()
-                      : Center(
-                          child: Text("Account Dimensions (Not implemented)"),
-                        ),
+                      : MyDimensionState(),
+                      // : Center(
+                      //     child: Text("Account Dimensions (Not implemented)"),
+                      //   ),
                 ),
               ],
             ),
@@ -255,11 +261,7 @@ class _AccountFormScreenState extends State<AccountFormScreen>
                     )
                     : DropdownButtonFormField<String>(
                       value: _selectedCurrency,
-                      // decoration: InputDecoration(
-                      //   filled: true,
-                      //   fillColor: Colors.white,
-                      //   border: OutlineInputBorder(),
-                      // ),
+                     
                       hint: const Text("Select Currency"),
                       items: currencies
                       .map((cur) => DropdownMenuItem(
@@ -311,7 +313,11 @@ class _AccountFormScreenState extends State<AccountFormScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color.fromARGB(255, 130, 204, 238),
                 ),
-                onPressed: () => Navigator.pop(context),
+                onPressed: (){ Navigator.pop(context);
+              setState(() {
+                _selectedTabIndex = 0;
+              });
+              },
                 child: const Text("Cancel"),
               ),
               SizedBox(width: 70,),
@@ -319,8 +325,10 @@ class _AccountFormScreenState extends State<AccountFormScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color.fromARGB(255, 130, 204, 238),
                 ),
-                onPressed: () => _showSummaryDialog(context),
-                child: const Text("Submit"),
+                onPressed: _submit,
+              child: const Text("Submit"),
+               
+                
               ),
             ],
           ),
@@ -335,8 +343,14 @@ class _AccountFormScreenState extends State<AccountFormScreen>
       children: [
         Text(label),
         SizedBox(height: 4),
-        TextField(
+        TextFormField(
           controller: controller,
+           validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return '$label is required';
+          }
+          return null;
+        },
           decoration: const InputDecoration(
             filled: true,
             fillColor: Color.fromARGB(255, 225, 233, 236),
@@ -347,34 +361,78 @@ class _AccountFormScreenState extends State<AccountFormScreen>
     );
   }
 
-  void _showSummaryDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Form Data Summary"),
-        content: SingleChildScrollView(
-          child: ListBody(
-            children: [
-              Text("Account Code: ${_accountCodeController.text}"),
-              Text("Account Name Short: ${_accountNameShortController.text}"),
-              Text("Account Name: ${_accountNameController.text}"),
-              Text("Account Type: $_selectedAccountType"),
-              Text("Off Balance Sheet: $isOffBalanceSheetChecked"),
-              Text("Bank Account: $isBankAccountChecked"),
-              Text("Multi-currency: ${_selectedCurrency ?? "None"}"),
-              Text("Account Status: $isAccountStatusChecked"),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Close"),
-          ),
-        ],
-      ),
+ void _submit() async {
+  if (_formkey.currentState!.validate()) {
+    final account = Account(
+       companyId: 1,
+       currencyId: 1, 
+      accountCode: _accountCodeController.text.trim(),
+      accountNameShort: _accountNameShortController.text.trim(),
+      accountName: _accountNameController.text.trim(),
+      accountType: _selectedAccountType ?? '',
+      offBalancesheet: isOffBalanceSheetChecked,
+      bankAccount: isBankAccountChecked,
+      multipleCurrency: isMultiCurrencyChecked,
+      currencyCode: isMultiCurrencyChecked
+          ? _selectedCurrencies.join(',')
+          : (_selectedCurrency ?? ''),
+      accountStatus: isAccountStatusChecked, 
+     
+       createdBy:1,
+        createdDate: '',
+         createdTime: '',
     );
+
+    try {
+      final api = ApiService();
+      final createdAccount = await api.createAccount(account);
+
+      setState(() {
+        _selectedTabIndex =1 ;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text( "Account created successfully!"
+              ),
+        ),
+      );
+
+      _clearForm();
+    } catch (e) {
+      print("Submit error: $e");
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Error"),
+          content: Text("Failed to submit account. ${e.toString()}"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Close"),
+            ),
+          ],
+        ),
+      );
+    }
   }
+}
+
+void _clearForm() {
+  _accountCodeController.clear();
+  _accountNameShortController.clear();
+  _accountNameController.clear();
+  _selectedAccountType = null;
+  _selectedCurrency = null;
+  _selectedCurrencies.clear();
+  isOffBalanceSheetChecked = false;
+  isBankAccountChecked = false;
+  isAccountStatusChecked = false;
+  isMultiCurrencyChecked = false;
+
+  setState(() {});
+}
+  
 }
 
 class TrapezoidClipper extends CustomClipper<Path> {
