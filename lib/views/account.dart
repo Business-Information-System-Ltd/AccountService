@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:intl/intl.dart';
 import 'package:accountservice/views/apiservices.dart';
 import 'package:accountservice/views/data.dart';
 import 'package:accountservice/views/table.dart';
@@ -21,10 +22,10 @@ class _AccountFormScreenState extends State<AccountFormScreen>
   final _accountNameShortController = TextEditingController();
   final _accountNameController = TextEditingController();
   final _formkey = GlobalKey<FormState>();
-  List<String> _selectedCurrencies = [];
 
   String? _selectedAccountType;
-  String? _selectedCurrency;
+  List<Currency> _selectedCurrencies = [];
+  Currency? _selectedCurrency;
 
   bool isOffBalanceSheetChecked = false;
   bool isBankAccountChecked = false;
@@ -34,31 +35,48 @@ class _AccountFormScreenState extends State<AccountFormScreen>
   bool isOffBalanceSheetEnabled = false;
   bool isBankAccountEnabled = false;
   //bool isMultiCurrencyEnabled = false;
-  final List<String> accountTypes = [
-    'Asset',
-    'Liability',
-    'Equity',
-    'Revenue',
-    'Expense',
+  final List<Map<String, String>> accountTypes = [
+    {'value': 'asset', 'label': 'Asset'},
+    {'value': 'liability', 'label': 'Liability'},
+    {'value': 'retained earning', 'label': 'Retained Earning'},
+    {'value': 'income', 'label': 'Income'},
+    {'value': 'expense', 'label': 'Expense'},
   ];
 
-  final List<String> currencies = ['USD', 'MMK', 'SGD', 'THB'];
-
+  //final List<String> currencies = ['USD', 'MMK', 'SGD', 'THB'];
+  List<Currency> currencies = [];
   @override
   void initState() {
     super.initState();
+    _fetchData();
+  }
+
+  void _fetchData() async {
+    try {
+      List<Currency> currencyList = await ApiService().fetchCurrency();
+
+      setState(() {
+        currencies = currencyList;
+      });
+
+      print(
+        "Fetched Currencies: ${currencies.map((e) => e.currencyCode).toList()}",
+      );
+    } catch (e) {
+      print("Currency fetch error: $e");
+    }
   }
 
   void _onAccountTypeChanged(String? value) {
     setState(() {
       _selectedAccountType = value;
 
-      isOffBalanceSheetEnabled = value == 'Asset' || value == 'Liability';
-      isBankAccountEnabled = value == 'Asset';
+      isOffBalanceSheetEnabled = value == 'asset' || value == 'liability';
+      isBankAccountEnabled = value == 'asset';
 
       if (!isOffBalanceSheetEnabled) isOffBalanceSheetChecked = false;
       if (!isBankAccountEnabled) isBankAccountChecked = false;
-      
+
       // if (value != 'Asset') _selectedCurrency = null;
     });
   }
@@ -127,9 +145,9 @@ class _AccountFormScreenState extends State<AccountFormScreen>
                   child: _selectedTabIndex == 0
                       ? _buildAccountTab()
                       : MyDimensionState(),
-                      // : Center(
-                      //     child: Text("Account Dimensions (Not implemented)"),
-                      //   ),
+                  // : Center(
+                  //     child: Text("Account Dimensions (Not implemented)"),
+                  //   ),
                 ),
               ],
             ),
@@ -181,16 +199,16 @@ class _AccountFormScreenState extends State<AccountFormScreen>
                         hint: const Text("Select Type"),
                         items: accountTypes
                             .map(
-                              (type) => DropdownMenuItem(
-                                value: type,
-                                child: Text(type),
+                              (type) => DropdownMenuItem<String>(
+                                value: type['value'],
+                                child: Text(type['label']!),
                               ),
                             )
                             .toList(),
-                            
                         onChanged: _onAccountTypeChanged,
                       ),
-                      SizedBox(width: 206),
+
+                      SizedBox(width: 126),
                       Checkbox(
                         value: isOffBalanceSheetChecked,
                         onChanged: isOffBalanceSheetEnabled
@@ -203,80 +221,85 @@ class _AccountFormScreenState extends State<AccountFormScreen>
                     ],
                   ),
                 ),
-                Row(
-                  // crossAxisAlignment: CrossAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
 
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Checkbox(
                       value: isMultiCurrencyChecked,
-                      onChanged:
-                           (val) {
-                              setState(() {
-                                isMultiCurrencyChecked = val ?? false;
-                                if (!isMultiCurrencyChecked) {
-                                  _selectedCurrencies.clear();
-                                  _selectedCurrency = null;
-                                }
-                              });
-                            }
-                    
+                      onChanged: (val) {
+                        setState(() {
+                          isMultiCurrencyChecked = val ?? false;
+                          if (!isMultiCurrencyChecked) {
+                            _selectedCurrencies.clear();
+                            _selectedCurrency = null;
+                          }
+                        });
+                      },
                     ),
-                    
-                    // SizedBox(width: 10,),
-                    
                     Text("Multi_currency : "),
                     SizedBox(width: 5),
                     SizedBox(
-                      width:183,
-                     // height:60,
-                    
-                   child:  isMultiCurrencyChecked
-                    ? MultiSelectDialogField<String>(
-                      items: currencies
-                          .map((cur) => MultiSelectItem(cur, cur))
-                          .toList(),
-                      title: const Text("Currencies"),
-                      dialogWidth: 100,
-                      dialogHeight: 180,
-                      chipDisplay: MultiSelectChipDisplay.none(),
-                      buttonText: Text(
-                        _selectedCurrencies.isEmpty
-                            ? "MMK"
-                            : _selectedCurrencies.join(', '),
-                        style: TextStyle(color: Colors.black, fontSize: 14),
-                      ),
-                      searchable: true,
-                      listType: MultiSelectListType.LIST,
-                      initialValue: _selectedCurrencies,
-                      buttonIcon: Icon(
-                        Icons.arrow_drop_down,
-                        color: Colors.black,
-                      ),
-                      onConfirm: (values) {
-                        setState(() {
-                          _selectedCurrencies = values;
-                        });
-                      },
-                    )
-                    : DropdownButtonFormField<String>(
-                      value: _selectedCurrency,
-                     
-                      hint: const Text("Select Currency"),
-                      items: currencies
-                      .map((cur) => DropdownMenuItem(
-                        value: cur,
-                        child: Text(cur),
-                        )).toList(),
-                        onChanged: (val){
-                          setState(() {
-                            _selectedCurrency = val;
-                          });
-                        },
+                      width: 183,
+                      child: isMultiCurrencyChecked
+                          ? MultiSelectDialogField<Currency>(
+                              items: currencies
+                                  .map(
+                                    (cur) =>
+                                        MultiSelectItem(cur, cur.currencyCode),
+                                  ) // Use currencyCode instead of the object
+                                  .toList(),
+                              title: const Text("Currencies"),
+                              dialogWidth: 100,
+                              dialogHeight: 180,
+                              chipDisplay: MultiSelectChipDisplay.none(),
+                              buttonText: Text(
+                                _selectedCurrencies.isEmpty
+                                    ? "MMK"
+                                    : _selectedCurrencies
+                                          .map((c) => c.currencyCode)
+                                          .join(', '),
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              searchable: true,
+                              listType: MultiSelectListType.LIST,
+                              initialValue: _selectedCurrencies,
+                              buttonIcon: Icon(
+                                Icons.arrow_drop_down,
+                                color: Colors.black,
+                              ),
+                              onConfirm: (values) {
+                                setState(() {
+                                  _selectedCurrencies = values;
+                                });
+                              },
+                            )
+                          : DropdownButtonFormField<Currency>(
+                              value: _selectedCurrency,
+                              hint: const Text("Select Currency"),
+                              items: currencies
+                                  .map(
+                                    (cur) => DropdownMenuItem(
+                                      value: cur,
+                                      child: Text(
+                                        cur.currencyCode,
+                                      ), // Display currencyCode
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (val) {
+                                setState(() {
+                                  _selectedCurrency = val;
+                                });
+                              },
+                            ),
                     ),
-                    ),
+
                     // Spacer(),
-                    SizedBox(width: 96),
+                    SizedBox(width: 56),
                     Checkbox(
                       value: isBankAccountChecked,
                       onChanged: isBankAccountEnabled
@@ -313,22 +336,21 @@ class _AccountFormScreenState extends State<AccountFormScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color.fromARGB(255, 130, 204, 238),
                 ),
-                onPressed: (){ Navigator.pop(context);
-              setState(() {
-                _selectedTabIndex = 0;
-              });
-              },
+                onPressed: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    _selectedTabIndex = 0;
+                  });
+                },
                 child: const Text("Cancel"),
               ),
-              SizedBox(width: 70,),
+              SizedBox(width: 70),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color.fromARGB(255, 130, 204, 238),
                 ),
                 onPressed: _submit,
-              child: const Text("Submit"),
-               
-                
+                child: const Text("Submit"),
               ),
             ],
           ),
@@ -345,12 +367,12 @@ class _AccountFormScreenState extends State<AccountFormScreen>
         SizedBox(height: 4),
         TextFormField(
           controller: controller,
-           validator: (value) {
-          if (value == null || value.trim().isEmpty) {
-            return '$label is required';
-          }
-          return null;
-        },
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return '$label is required';
+            }
+            return null;
+          },
           decoration: const InputDecoration(
             filled: true,
             fillColor: Color.fromARGB(255, 225, 233, 236),
@@ -361,78 +383,75 @@ class _AccountFormScreenState extends State<AccountFormScreen>
     );
   }
 
- void _submit() async {
-  if (_formkey.currentState!.validate()) {
-    final account = Account(
-       companyId: 1,
-       currencyId: 1, 
-      accountCode: _accountCodeController.text.trim(),
-      accountNameShort: _accountNameShortController.text.trim(),
-      accountName: _accountNameController.text.trim(),
-      accountType: _selectedAccountType ?? '',
-      offBalancesheet: isOffBalanceSheetChecked,
-      bankAccount: isBankAccountChecked,
-      multipleCurrency: isMultiCurrencyChecked,
-      currencyCode: isMultiCurrencyChecked
-          ? _selectedCurrencies.join(',')
-          : (_selectedCurrency ?? ''),
-      accountStatus: isAccountStatusChecked, 
-     
-       createdBy:1,
-        createdDate: '',
-         createdTime: '',
-    );
+  void _submit() async {
+    if (_formkey.currentState!.validate()) {
+      final now = DateTime.now();
+      final isoDate = DateFormat("yyyy-MM-ddTHH:mm:ss'Z'").format(now);
+      final account = Account(
+        companyId: 3,
+        currencyId: 1,
+        accountCode: _accountCodeController.text.trim(),
+        accountNameShort: _accountNameShortController.text.trim(),
+        accountName: _accountNameController.text.trim(),
+        accountType: _selectedAccountType ?? '',
+        offBalancesheet: isOffBalanceSheetChecked,
+        bankAccount: isBankAccountChecked,
+        multipleCurrency: isMultiCurrencyChecked,
+        currencyCode: isMultiCurrencyChecked
+            ? _selectedCurrencies.map((c) => c.currencyCode).join(',')
+            : (_selectedCurrency?.currencyCode ?? ''),
+        accountStatus: isAccountStatusChecked,
+        createdBy: 1,
+        createdDate: isoDate,
+        createdTime: isoDate,
+      );
 
-    try {
-      final api = ApiService();
-      final createdAccount = await api.createAccount(account);
+      try {
+        final api = ApiService();
+        final createdAccount = await api.createAccount(account);
 
-      setState(() {
-        _selectedTabIndex =1 ;
-      });
+        setState(() {
+          _selectedTabIndex = 1;
+        });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text( "Account created successfully!"
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Account created successfully!")),
+        );
+
+        _clearForm();
+      } catch (e) {
+        print("Submit error: $e");
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text("Error"),
+            content: Text("Failed to submit account. ${e.toString()}"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Close"),
               ),
-        ),
-      );
-
-      _clearForm();
-    } catch (e) {
-      print("Submit error: $e");
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text("Error"),
-          content: Text("Failed to submit account. ${e.toString()}"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Close"),
-            ),
-          ],
-        ),
-      );
+            ],
+          ),
+        );
+      }
     }
   }
-}
 
-void _clearForm() {
-  _accountCodeController.clear();
-  _accountNameShortController.clear();
-  _accountNameController.clear();
-  _selectedAccountType = null;
-  _selectedCurrency = null;
-  _selectedCurrencies.clear();
-  isOffBalanceSheetChecked = false;
-  isBankAccountChecked = false;
-  isAccountStatusChecked = false;
-  isMultiCurrencyChecked = false;
+  void _clearForm() {
+    _accountCodeController.clear();
+    _accountNameShortController.clear();
+    _accountNameController.clear();
+    _selectedAccountType = null;
+    _selectedCurrency = null;
+    _selectedCurrencies.clear();
+    isOffBalanceSheetChecked = false;
+    isBankAccountChecked = false;
+    isAccountStatusChecked = false;
+    isMultiCurrencyChecked = false;
 
-  setState(() {});
-}
-  
+    setState(() {});
+  }
 }
 
 class TrapezoidClipper extends CustomClipper<Path> {

@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'data.dart';
 
 class ApiService {
-  static String baseUrl = 'http://localhost:3000/';
+  static String baseUrl = 'http://127.0.0.1:8000/api/';
   final String accountEndPoint = "${baseUrl}accounts/";
   final String countryEndPoint = "${baseUrl}countries/";
   final String companyEndPoint = "${baseUrl}companies/";
@@ -25,19 +25,27 @@ class ApiService {
 }
 
 
-  Future<Account> createAccount(Account account) async {
-    final response = await http.post(
-      Uri.parse(accountEndPoint),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(account.toJson()),
-    );
+ Future<Account> createAccount(Account account) async {
+  final response = await http.post(
+    Uri.parse(accountEndPoint),
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: jsonEncode(account.toJson()),
+  );
 
-    if (response.statusCode == 201) {
-      return Account.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Failed to create account');
-    }
+  print("Request Payload: ${jsonEncode(account.toJson())}");
+  print("Status Code: ${response.statusCode}");
+  print("Response Body: ${response.body}");
+
+  if (response.statusCode == 201) {
+    return Account.fromJson(json.decode(response.body));
+  } else {
+    throw Exception('Failed to create account');
   }
+}
+
 
   Future<Account> updateAccount(Account account) async {
     final response = await http.put(
@@ -159,16 +167,19 @@ class ApiService {
   }
   //Currency
   
-  Future<List<Currency>> fetchCurrency() async {
-    final response = await http.get(Uri.parse(currencyEndPoint));
+ Future<List<Currency>> fetchCurrency() async {
+  final response = await http.get(Uri.parse(currencyEndPoint));
+  print("Calling API: $currencyEndPoint");
+  print("Response status: ${response.statusCode}");
+  print("Response body: ${response.body}");
 
-    if (response.statusCode == 200) {
-      List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => Currency.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to load currency');
-    }
+  if (response.statusCode == 200) {
+    List data = json.decode(response.body);
+    return data.map((e) => Currency.fromJson(e)).toList();
+  } else {
+    throw Exception('Failed to load currency');
   }
+}
   
 
   Future<Currency> postCurrency(Currency currency) async {

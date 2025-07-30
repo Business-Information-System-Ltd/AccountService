@@ -1,19 +1,19 @@
 class Account {
   final int? accountId;
-  final int companyId;
-  final int currencyId;
+   final int companyId;
   final String accountCode;
   final String accountName;
   final String accountNameShort;
   final String accountType;
   final bool offBalancesheet;
   final bool multipleCurrency;
+  final int currencyId;
   final String currencyCode;
   final bool accountStatus;
   final bool bankAccount;
   final int createdBy;
   final String createdDate;
-  final String createdTime;
+  final String createdTime; 
 
   Account({
     this.accountId,
@@ -36,8 +36,8 @@ class Account {
   factory Account.fromJson(Map<String, dynamic> json) {
     return Account(
       accountId: json['account_id'],
-      companyId: json['company_id'],
-      currencyId: json['currency_id'],
+      companyId: json['company'],
+      currencyId: json['currency'],
       accountCode: json['account_code'],
       accountName: json['account_name'],
       accountNameShort: json['account_name_short'],
@@ -56,8 +56,8 @@ class Account {
   Map<String, dynamic> toJson() {
     return {
       'account_id': accountId,
-      'company_id': companyId,
-      'currency_id': currencyId,
+      'company': companyId,
+      'currency': currencyId,
       'account_code': accountCode,
       'account_name': accountName,
       'account_name_short': accountNameShort,
@@ -165,4 +165,19 @@ class Currency {
 
     };
   }
+  @override
+@override
+String toString() => currencyCode;
+
+String get displayText => "$currencyCode - $currencyName";
+ @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Currency &&
+          runtimeType == other.runtimeType &&
+          currencyId == other.currencyId;
+
+  @override
+  int get hashCode => currencyId.hashCode;
 }
+
